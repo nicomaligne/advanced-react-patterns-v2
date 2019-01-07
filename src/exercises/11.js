@@ -3,21 +3,60 @@ import React, {Fragment} from 'react'
 import {Switch} from '../switch'
 
 // 🐨 create your React context here with React.createContext
+const ToggleContext = React.createContext()
+
+function ToggleConsumer(props) {
+  return (
+    <ToggleContext.Consumer {...props}>
+      {context => {
+        if (!context) {
+          throw new Error(
+            `Toggle.Consumer cannot be rendered outside the Toggle component`,
+          )
+        }
+        return props.children(context)
+      }}
+    </ToggleContext.Consumer>
+  )
+}
 
 class Toggle extends React.Component {
   // 🐨 expose the ToggleContext.Consumer as a static property of Toggle here.
-  state = {on: false}
+  static Consumer = ToggleConsumer
+  static On = ({children}) => (
+    <ToggleConsumer>{on => (on ? children : null)}</ToggleConsumer>
+  )
+  static Off = ({children}) => (
+    <ToggleConsumer>{on => (on ? null : children)}</ToggleConsumer>
+  )
+  static Button = props => (
+    <ToggleConsumer>
+      {({on, toggle}) => (
+        <Switch onClick={toggle} on={on} {...props} />
+      )}
+    </ToggleConsumer>
+  )
+
   toggle = () =>
     this.setState(
       ({on}) => ({on: !on}),
       () => this.props.onToggle(this.state.on),
     )
+  state = {on: false, toggle: this.toggle}
   render() {
     // 🐨 replace this with rendering the ToggleContext.Provider
-    return this.props.children({
-      on: this.state.on,
-      toggle: this.toggle,
-    })
+    const {children, ...rest} = this.props
+    return (
+      <ToggleContext.Provider value={this.state} {...this.rest}>
+        {typeof children === 'function'
+          ? children(this.state)
+          : children}
+      </ToggleContext.Provider>
+    )
+    // return this.props.children({
+    //   on: this.state.on,
+    //   toggle: this.toggle,
+    // })
   }
 }
 
